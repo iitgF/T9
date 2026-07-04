@@ -9,7 +9,7 @@
 \usepackage{graphicx}
 \usepackage{dblfloatfix}      % lets full-width figures place on the current page, not drift to the end
 \usepackage{booktabs}
-\usepackage{url}
+\usepackage{xurl}   % break long URLs anywhere so DOIs/links wrap inside narrow columns
 \usepackage{titlesec}
 \usepackage[labelfont=bf,labelsep=period,font=small]{caption}
 \usepackage[hidelinks]{hyperref}
@@ -42,7 +42,7 @@ Indian Institute of Technology Guwahati, India\\
 % ------------------------------------------------------------------ abstract
 \begin{center}\textbf{ABSTRACT}\end{center}
 \noindent
-This report presents a self-guided term project on one-day-ahead volatility forecasting for equity indices. Volatility drives option pricing, value-at-risk and position sizing, and, unlike the direction of returns, is strongly persistent and therefore forecastable. The objective was to test whether machine-learning (gradient-boosted trees) and deep-learning (LSTM) models can outperform well-implemented classical baselines. Eight models (naive, 21-day rolling variance, RiskMetrics EWMA, GARCH(1,1), GJR-GARCH, EGARCH, a walk-forward XGBoost and a regularized LSTM) were evaluated on 17 years of S\&P~500 daily returns (2008–2024) under a strict walk-forward protocol with no look-ahead bias, using the noise-robust QLIKE loss and the Diebold–Mariano test. A monthly re-estimated GARCH(1,1) achieved the best out-of-sample QLIKE (1.488), ahead of EGARCH, GJR-GARCH, EWMA, XGBoost and the LSTM; differences among the top three were statistically insignificant ($p=0.87$). XGBoost attained the lowest RMSE and MAE of all models, yet no learned model beat the GARCH family on the risk-relevant criterion. The project reproduces, with a fully reproducible open pipeline, the classic finding that GARCH is extremely hard to beat on daily data.
+This report presents a self-guided term project on one-day-ahead volatility forecasting for equity indices. Volatility drives option pricing, value-at-risk and position sizing, and, unlike the direction of returns, is strongly persistent and therefore forecastable. The objective was to test whether machine-learning (gradient-boosted trees) and deep-learning (LSTM) models can outperform well-implemented classical baselines. Eight models (naive, 21-day rolling variance, RiskMetrics EWMA, GARCH(1,1), GJR-GARCH, EGARCH, a walk-forward XGBoost and a regularized LSTM) were evaluated on 17 years of S\&P~500 daily returns (2008--2024) under a strict walk-forward protocol with no look-ahead bias, using the noise-robust QLIKE loss and the Diebold–Mariano test. A monthly re-estimated GARCH(1,1) achieved the best out-of-sample QLIKE (1.488), ahead of EGARCH, GJR-GARCH, EWMA, XGBoost and the LSTM; differences among the top three were statistically insignificant ($p=0.87$). XGBoost attained the lowest RMSE and MAE of all models, yet no learned model beat the GARCH family on the risk-relevant criterion. The project reproduces, with a fully reproducible open pipeline, the classic finding that GARCH is extremely hard to beat on daily data.
 
 \vspace{2mm}
 \noindent\textbf{\textit{Index Terms:}} Volatility forecasting, GARCH, QLIKE, XGBoost, LSTM, walk-forward evaluation
@@ -197,42 +197,43 @@ Future work: realized-variance targets from intraday data (the HAR-RV setting \c
 \section{Artifacts and Demonstrations}
 
 \begin{itemize}
-  \item \textbf{Code repository:} \url{https://github.com/iitgF/volatility-forecasting} (\emph{to be updated once pushed}). Contains the modular \texttt{volforecast} Python package (configuration, data, metrics, features, baselines, XGBoost, LSTM, evaluation, process-parallel pipeline) and both notebooks.
+  \item \textbf{Code repository:} \url{https://github.com/iitgF/volatility-forecasting}. Contains the modular \texttt{volforecast} Python package (configuration, data, metrics, features, baselines, XGBoost, LSTM, evaluation, process-parallel pipeline) and both notebooks.
+  \item \textbf{LaTeX source (Overleaf):} \url{https://www.overleaf.com/project/6a48e18e7dee3049b3ee4209}
+  \item \textbf{Video demonstration:} \url{https://youtu.be/XXXXXXXXXXX} \emph{(placeholder, to be replaced with the final recording)}.
   \item \textbf{Consolidated notebook:} \texttt{volatility\_forecasting\_consolidated.ipynb}, the full study in a single annotated notebook, every module inline with a detailed introduction, executed end-to-end with all results and figures reproduced in this report.
   \item \textbf{Starter/development notebook:} \texttt{volatility\_forecasting\_starter.ipynb}, importing from \texttt{volforecast}.
 \end{itemize}
 
-\noindent\textit{Attribution note:} AI-assisted tooling (Claude Code) was used for code refactoring, optimization and drafting support. All modelling decisions, verification of results and the final text are the author's responsibility, and all reported numbers were reproduced end-to-end from the committed code.
-
 % ------------------------------------------------------------------ 8
+\newpage
 \begin{thebibliography}{9}
 
 \bibitem{bollerslev1986}
-T.~Bollerslev, ``Generalized autoregressive conditional heteroskedasticity,'' \textit{Journal of Econometrics}, vol.~31, no.~3, pp. 307--327, 1986.
+T.~Bollerslev, ``Generalized autoregressive conditional heteroskedasticity,'' \textit{Journal of Econometrics}, vol.~31, no.~3, pp. 307--327, 1986. \url{https://doi.org/10.1016/0304-4076(86)90063-1}
 
 \bibitem{nelson1991}
-D.~B. Nelson, ``Conditional heteroskedasticity in asset returns: A new approach,'' \textit{Econometrica}, vol.~59, no.~2, pp. 347--370, 1991.
+D.~B. Nelson, ``Conditional heteroskedasticity in asset returns: A new approach,'' \textit{Econometrica}, vol.~59, no.~2, pp. 347--370, 1991. \url{https://doi.org/10.2307/2938260}
 
 \bibitem{glosten1993}
-L.~R. Glosten, R.~Jagannathan, and D.~E. Runkle, ``On the relation between the expected value and the volatility of the nominal excess return on stocks,'' \textit{Journal of Finance}, vol.~48, no.~5, pp. 1779--1801, 1993.
+L.~R. Glosten, R.~Jagannathan, and D.~E. Runkle, ``On the relation between the expected value and the volatility of the nominal excess return on stocks,'' \textit{Journal of Finance}, vol.~48, no.~5, pp. 1779--1801, 1993. \url{https://doi.org/10.1111/j.1540-6261.1993.tb05128.x}
 
 \bibitem{diebold1995}
-F.~X. Diebold and R.~S. Mariano, ``Comparing predictive accuracy,'' \textit{Journal of Business \& Economic Statistics}, vol.~13, no.~3, pp. 253--263, 1995.
+F.~X. Diebold and R.~S. Mariano, ``Comparing predictive accuracy,'' \textit{Journal of Business \& Economic Statistics}, vol.~13, no.~3, pp. 253--263, 1995. \url{https://doi.org/10.1080/07350015.1995.10524599}
 
 \bibitem{riskmetrics1996}
 J.P.~Morgan/Reuters, \textit{RiskMetrics: Technical Document}, 4th~ed., 1996.
 
 \bibitem{harvey1997}
-D.~Harvey, S.~Leybourne, and P.~Newbold, ``Testing the equality of prediction mean squared errors,'' \textit{International Journal of Forecasting}, vol.~13, no.~2, pp. 281--291, 1997.
+D.~Harvey, S.~Leybourne, and P.~Newbold, ``Testing the equality of prediction mean squared errors,'' \textit{International Journal of Forecasting}, vol.~13, no.~2, pp. 281--291, 1997. \url{https://doi.org/10.1016/S0169-2070(96)00719-4}
 
 \bibitem{hansen2005}
-P.~R. Hansen and A.~Lunde, ``A forecast comparison of volatility models: Does anything beat a GARCH(1,1)?'' \textit{Journal of Applied Econometrics}, vol.~20, no.~7, pp. 873--889, 2005.
+P.~R. Hansen and A.~Lunde, ``A forecast comparison of volatility models: Does anything beat a GARCH(1,1)?'' \textit{Journal of Applied Econometrics}, vol.~20, no.~7, pp. 873--889, 2005. \url{https://doi.org/10.1002/jae.800}
 
 \bibitem{corsi2009}
-F.~Corsi, ``A simple approximate long-memory model of realized volatility,'' \textit{Journal of Financial Econometrics}, vol.~7, no.~2, pp. 174--196, 2009.
+F.~Corsi, ``A simple approximate long-memory model of realized volatility,'' \textit{Journal of Financial Econometrics}, vol.~7, no.~2, pp. 174--196, 2009. \url{https://doi.org/10.1093/jjfinec/nbp001}
 
 \bibitem{patton2011}
-A.~J. Patton, ``Volatility forecast comparison using imperfect volatility proxies,'' \textit{Journal of Econometrics}, vol.~160, no.~1, pp. 246--256, 2011.
+A.~J. Patton, ``Volatility forecast comparison using imperfect volatility proxies,'' \textit{Journal of Econometrics}, vol.~160, no.~1, pp. 246--256, 2011. \url{https://doi.org/10.1016/j.jeconom.2010.03.034}
 
 \end{thebibliography}
 
