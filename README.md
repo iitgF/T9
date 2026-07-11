@@ -42,6 +42,8 @@ volforecast/                 modular pipeline (importable package)
 volatility_forecasting_consolidated.ipynb   full annotated study, every module inline
 volatility_forecasting_starter.ipynb        development notebook, imports from volforecast
 report.tex                                   term-project report (compile on Overleaf)
+T9.pdf                                       compiled report
+Project_Video_Presentation.pptx              video presentation deck
 fig_*.png                                    figures used by the report
 ```
 

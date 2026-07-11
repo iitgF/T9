@@ -7,17 +7,9 @@ __pycache__/
 # Local Claude Code settings
 .claude/
 
-# Duplicate figure copies (report.tex references the root-level PNGs)
-figures/
-
-# Superseded report drafts (report.tex is the canonical source)
-REPORT.md
-main.md
-volatility_forecasting_starter0.ipynb
-
 # Course-provided materials, not part of this project's deliverable
-*.pptx
-*.docx
+First slide_video*.pptx
+IIT_Guwahati_Video_Submission_Guide*.docx
 iitg_bsc_internship_term_project_report_template*.pdf
 
 # LaTeX build artifacts (in case you compile locally)
