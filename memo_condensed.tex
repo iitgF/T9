@@ -1,0 +1,107 @@
+% Study memo (condensed version): rapid reference + quick-fire Q&A
+% for the T9 term project "Can Machine Learning Beat Classical Volatility Models?"
+% Compile with pdfLaTeX on Overleaf. No figures required.
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[a4paper,top=1.9cm,bottom=1.9cm,left=1.9cm,right=1.9cm,columnsep=0.7cm]{geometry}
+\usepackage{newtxtext,newtxmath}
+\usepackage{amsmath,amssymb}
+\usepackage{xurl}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\newcommand{\term}[1]{\textbf{#1}:}
+
+\begin{document}
+\twocolumn[{
+\centering
+{\large\bfseries Study Memo (Condensed): Can Machine Learning Beat Classical Volatility Models?\par}
+\vspace{2mm}
+{\itshape François Schmitt (23035010523), Trimester 9 Term Project}\par
+\vspace{4mm}
+}]
+
+\section*{Concepts in one line each}
+
+\term{Volatility} the conditional standard deviation $\sigma_t$ of returns; drives option prices, VaR, margins, position sizes.
+
+\term{Task} at the close of day $t-1$, forecast day $t$'s variance $\hat\sigma_t^2$ using information up to $t-1$ only.
+
+\term{Latent volatility} never observed on any day; forecasts are scored against the proxy $r_t^2$, unbiased but very noisy.
+
+\term{Volatility clustering} ACF of returns is flat, ACF of $|r_t|$ decays slowly and stays significant; magnitude is forecastable, direction is not.
+
+\term{Leverage effect} negative returns raise future volatility more than positive ones; encoded by GJR (threshold term) and EGARCH (signed log-variance term).
+
+\term{Walk-forward} the final 30\% of days is the shared test window; every forecast uses past data only; 4{,}650 returns 2008--2026, test = 1{,}395 days (2020-12-07 to 2026-06-29, holding the 2022 bear and the April-2025 tariff shock; COVID is in train).
+
+\term{Refit-and-roll} GARCH-family parameters re-fit by MLE every 22 days on an expanding window; the recursion rolls forward daily on observed returns in between; recursions verified against the \texttt{arch} package source.
+
+\term{Naive / Rolling / EWMA} $r_{t-1}^2$; variance of last 21 days; RiskMetrics $\hat\sigma_t^2=0.94\,\hat\sigma_{t-1}^2+0.06\,r_{t-1}^2$.
+
+\term{GARCH(1,1)} $\sigma_t^2=\omega+\alpha r_{t-1}^2+\beta\sigma_{t-1}^2$; three parameters, persistence via $\alpha+\beta\approx 1$.
+
+\term{Features (shared)} return and squared-return lags 1--10, realized variance over 5 and 21 days (HAR horizons), 5-day mean $|r|$.
+
+\term{Target (shared)} $y_t=\ln(\frac15\sum_{j=0}^4 r_{t+j}^2+\varepsilon)$: forward 5-day smoothed log variance; needs a 5-day training buffer since $y_t$ is only known at $t+4$.
+
+\term{XGBoost} 400 shallow trees, refit from scratch every 22 days (same cadence as GARCH); warm-starting rejected for reproducibility.
+
+\term{LSTM} 1 layer, 32 units, reads 20 days of standardized features; train-only scaling, validation from end of train, early stopping (stopped epoch 37); sequences labelled at their last row.
+
+\term{RMSE / MAE} symmetric point-accuracy on the volatility scale; interpretable, but blind to the asymmetry a risk manager cares about.
+
+\term{QLIKE} $\mathrm{mean}(p/v-\ln(p/v)-1)$ with $p=r_t^2$, $v=\hat\sigma_t^2$; ranking robust to proxy noise (Patton 2011) and punishes under-prediction of variance; the headline metric.
+
+\term{Naive QLIKE blow-up} $p/v$ diverges when a near-zero forecast meets movement; hence naive scores $5.4\times10^3$ vs $\approx 1.5$ for the rest.
+
+\term{Diebold--Mariano} tests whether the mean daily loss gap between two models is real; Harvey--Leybourne--Newbold small-sample correction; negative statistic favours the first model.
+
+\term{Reproducibility} fixed seeds, one shared split, five independent heavy fits in parallel processes; full study re-runs in about one minute.
+
+\section*{Results in five lines}
+
+EGARCH(1,1) wins QLIKE (1.5042), statistically tied with GJR-GARCH (1.5091, $p=0.47$).
+
+Leverage now matters: both beat plain GARCH(1,1) decisively ($p<0.0001$); on the 2008--2024 window plain GARCH had won and the edge was insignificant.
+
+LSTM is third (1.5287), ahead of plain GARCH (1.5569), and statistically tied with the winner ($p=0.19$).
+
+Learned models take point accuracy (LSTM best RMSE 0.00686, XGBoost best MAE 0.00496) but trail on QLIKE: smoothed targets react late at spikes.
+
+Verdict: no learned model outranks the leverage GARCH family where it matters; the ML case is narrower than before, not closed.
+
+\section*{Quick-fire Q\&A}
+
+\textbf{Q. Why forecast volatility, not returns?} A. Returns have a flat ACF (unpredictable direction); $|r_t|$ has a slowly decaying ACF (predictable magnitude). Only the second is a forecasting problem.
+
+\textbf{Q. How do you score forecasts of something never observed?} A. Against the unbiased proxy $r_t^2$ with QLIKE, whose model ranking is provably robust to proxy noise.
+
+\textbf{Q. Why QLIKE over RMSE?} A. Robust ranking under a noisy proxy, and asymmetric: under-predicting variance in a crash is punished hardest, matching real risk costs. Here the learned models win RMSE/MAE yet lose QLIKE.
+
+\textbf{Q. Why not train ML on $r_t^2$ directly?} A. Too noisy; squared-error learners collapse toward a constant. Hence the log 5-day-forward smoothed target, paid for with a 5-day training buffer.
+
+\textbf{Q. Why walk-forward, not cross-validation?} A. Random splits train on the future. Walk-forward reproduces deployment: past-only information, periodic refits, one fixed out-of-sample tail.
+
+\textbf{Q. Monthly refits but daily forecasts: how?} A. Parameters are re-estimated every 22 days; the fitted recursion updates the variance state daily from observed returns, exactly as the model equation prescribes.
+
+\textbf{Q. Why did the winner change when the sample was extended?} A. The new test window holds two asymmetric crashes (2022, April 2025); the leverage term goes from insignificant to decisive ($p<0.0001$). Model rankings are window-dependent; that is a finding, not a flaw.
+
+\textbf{Q. Is the LSTM good, then?} A. Competitive: third place, best RMSE, statistically tied with the winner ($p=0.19$). But tied is not better; the supported claim stays ``no learned model outranks the leverage GARCH family''.
+
+\textbf{Q. Why does the LSTM win RMSE but lose QLIKE?} A. Smoothed target, symmetric training loss: accurate on average, one step late at eruptions, and QLIKE charges precisely for late under-prediction.
+
+\textbf{Q. Why is naive's QLIKE 5{,}440?} A. The loss ratio $p/v$ explodes whenever yesterday's flat return makes $v\approx 0$ and today moves. Property of the loss, visible only because the metric is right.
+
+\textbf{Q. What does the DM test add over the leaderboard?} A. Error bars: it converts a QLIKE gap into a significance statement using the autocorrelation-consistent variance of daily loss differentials (with the HLN correction).
+
+\textbf{Q. Anti-leakage guards in the LSTM?} A. Last-row sequence labels, train-only standardization, validation carved from the end of train, 5-day target buffer.
+
+\textbf{Q. Biggest lesson?} A. The harness beats the model: leak-free evaluation and the choice of metric changed conclusions more than any architecture or hyperparameter; ``better'' is undefined until loss and window are fixed.
+
+\vspace{2mm}
+\textit{Code and results: \url{https://github.com/iitgF/T9}. Full walkthrough: \texttt{memo\_standard.tex}.}
+
+\end{document}
