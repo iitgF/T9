@@ -1,4 +1,4 @@
-% IITG BSc (Hons) DS&AI Term Project Report — SIMPLE / CONDENSED VERSION
+% IITG BSc (Hons) DS&AI Term Project Report: SIMPLE / CONDENSED VERSION
 % A shorter, plainer-language companion to report.tex (the full report).
 % Compile with pdfLaTeX on Overleaf. Upload with the three fig_*.png files.
 \documentclass[a4paper,twocolumn,10pt]{article}
@@ -34,7 +34,7 @@ Indian Institute of Technology Guwahati, India\\
 
 \begin{center}\textbf{ABSTRACT}\end{center}
 \noindent
-This project asks a simple question: can machine-learning and deep-learning models forecast next-day stock-market volatility better than classical statistical models? Eight models were tested on 17 years of S\&P~500 daily returns using a strict walk-forward setup with no look-ahead bias. A plain GARCH(1,1) gave the best result on the main metric (QLIKE). XGBoost had the lowest RMSE and MAE, but no learned model beat the GARCH family where it matters. The project reproduces the well-known result that GARCH is very hard to beat on daily data.
+This project asks a simple question: can machine-learning and deep-learning models forecast next-day stock-market volatility better than classical statistical models? Eight models were tested on 18.5 years of S\&P~500 daily returns (2008--2026) using a strict walk-forward setup with no look-ahead bias. EGARCH(1,1), a classical model with a leverage term, gave the best result on the main metric (QLIKE), and the leverage models significantly beat plain GARCH(1,1) on a test window containing the 2022 bear market and the April-2025 tariff shock. The LSTM came third, ahead of plain GARCH and statistically tied with the winner, but no learned model beat the leverage GARCH family where it matters. The well-known result that GARCH-type models are very hard to beat on daily data survives, in leverage-aware form.
 
 \vspace{2mm}
 \noindent\textbf{\textit{Index Terms:}} Volatility forecasting, GARCH, QLIKE, XGBoost, LSTM
@@ -55,9 +55,9 @@ The task is to forecast tomorrow's variance using only information available tod
 \textbf{Scoring.} QLIKE is the headline metric because its model ranking is robust to noise in the proxy and it punishes under-prediction of variance. The Diebold–Mariano test checks whether a gap in loss is real or luck.
 
 \section{Experiments and Results}
-\textbf{Data.} S\&P~500 daily closes (2008--2024, Yahoo Finance), 4{,}277 returns. The last 30\% (1{,}284 days, 2019-11-21 to 2024-12-30, including the COVID crash) is the out-of-sample test window shared by every model.
+\textbf{Data.} S\&P~500 daily closes (2008--2026, Yahoo Finance), 4{,}650 returns. The last 30\% (1{,}395 days, 2020-12-07 to 2026-06-29, including the 2022 bear market and the April-2025 tariff shock) is the out-of-sample test window shared by every model.
 
-Table~\ref{tab:lb} shows the leaderboard. GARCH(1,1) wins on QLIKE. The three GARCH-family models are statistically tied: Diebold–Mariano for GARCH(1,1) versus EGARCH(1,1) gives $p=0.87$ (not significant). XGBoost has the best RMSE and MAE but ranks fifth on QLIKE, because its smoothed target makes it accurate on average yet slow to react at volatility spikes. Fig.~\ref{fig:best} shows the winning forecast tracking realized volatility.
+Table~\ref{tab:lb} shows the leaderboard. EGARCH(1,1) wins on QLIKE, statistically tied with GJR-GARCH (Diebold–Mariano $p=0.47$), and both leverage models significantly beat plain GARCH(1,1) ($p<0.0001$). The LSTM ranks third, ahead of plain GARCH, and is statistically tied with the winner ($p=0.19$). The learned models take the point-accuracy metrics (LSTM the best RMSE, XGBoost the best MAE) but rank lower on QLIKE, because their smoothed target makes them accurate on average yet slow to react at volatility spikes. Fig.~\ref{fig:best} shows the winning forecast tracking realized volatility.
 
 \begin{table}[t]
 \centering
@@ -68,14 +68,14 @@ Table~\ref{tab:lb} shows the leaderboard. GARCH(1,1) wins on QLIKE. The three GA
 \toprule
 Model & RMSE & MAE & QLIKE \\
 \midrule
-GARCH(1,1)      & 0.00887 & 0.00633 & \textbf{1.4879} \\
-EGARCH(1,1)     & 0.00852 & 0.00603 & 1.4943 \\
-GJR-GARCH(1,1)  & 0.00881 & 0.00611 & 1.4974 \\
-EWMA(0.94)      & 0.00934 & 0.00657 & 1.5161 \\
-XGBoost         & \textbf{0.00816} & \textbf{0.00547} & 1.5567 \\
-Rolling(21)     & 0.00948 & 0.00646 & 1.5798 \\
-LSTM            & 0.00965 & 0.00570 & 1.5915 \\
-Naive           & 0.01114 & 0.00747 & 1192.69 \\
+EGARCH(1,1)     & 0.00728 & 0.00556 & \textbf{1.5042} \\
+GJR-GARCH(1,1)  & 0.00731 & 0.00554 & 1.5091 \\
+LSTM            & \textbf{0.00686} & 0.00499 & 1.5287 \\
+GARCH(1,1)      & 0.00751 & 0.00576 & 1.5569 \\
+EWMA(0.94)      & 0.00750 & 0.00573 & 1.5814 \\
+XGBoost         & 0.00691 & \textbf{0.00496} & 1.5911 \\
+Rolling(21)     & 0.00762 & 0.00571 & 1.6344 \\
+Naive           & 0.00951 & 0.00672 & 5440.50 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -83,15 +83,15 @@ Naive           & 0.01114 & 0.00747 & 1192.69 \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_best_vs_realized.png}
-\caption{Best model by QLIKE, GARCH(1,1), against realized volatility over the test window.}
+\caption{Best model by QLIKE, EGARCH(1,1), against realized volatility over the test window.}
 \label{fig:best}
 \end{figure}
 
 \section{Discussion}
-GARCH is hard to beat for four reasons. The signal is one-dimensional (persistence in return size), and GARCH is built exactly for it with only three parameters. GARCH is fit by maximum likelihood on the right objective, while the learned models train on a smoother substitute target. Daily data is small data, which favours simple models over neural networks. Finally, QLIKE rewards fast reactions to spikes, and GARCH reacts the next day. The main limitations are the single asset and test window, the noisy squared-return proxy, and modest hyperparameter tuning.
+The leverage models lead because the test window is dominated by two sharp crashes (2022 and April 2025), and their extra term turns a large fall directly into higher next-day variance; on this window that advantage over plain GARCH is highly significant. The GARCH family as a whole stays ahead of the learned models for three reasons: it is fit by maximum likelihood on the right objective, while the learned models train on a smoother substitute target; daily data is small data, which favours simple models over neural networks; and QLIKE rewards fast reactions to spikes, which the GARCH recursion delivers the very next day. The case against the learned models is narrower than on shorter samples, though: the LSTM learned the leverage pattern from data and finished statistically tied with the winner. The main limitations are the single asset and test window, the noisy squared-return proxy, and modest hyperparameter tuning.
 
 \section{Conclusion}
-Under a leak-free walk-forward test on 17 years of S\&P~500 data, a monthly re-estimated GARCH(1,1) gave the best one-day-ahead volatility forecasts, and no learned model beat the GARCH family on QLIKE. The learned models were competitive but not better where it counts. The clearest lesson was methodological: a leak-free evaluation and the choice of metric matter more than model complexity. Useful next steps are intraday realized-variance targets, extra inputs such as the VIX, and multi-asset training.
+Under a leak-free walk-forward test on 18.5 years of S\&P~500 data, a monthly re-estimated EGARCH(1,1) gave the best one-day-ahead volatility forecasts, the leverage models significantly beat plain GARCH, and no learned model beat the leverage GARCH family on QLIKE. The learned models were competitive (the LSTM statistically tied with the winner) but not better where it counts. The clearest lesson was methodological: a leak-free evaluation and the choice of metric matter more than model complexity. Useful next steps are intraday realized-variance targets, extra inputs such as the VIX, and multi-asset training.
 
 \section{Artifacts}
 Code: \url{https://github.com/iitgF/T9} (the \texttt{volforecast} package and notebooks). LaTeX source (Overleaf): \url{https://www.overleaf.com/project/6a48e18e7dee3049b3ee4209}. Full report: \texttt{report.tex}. AI-assisted tooling was used for refactoring and drafting; all decisions, checks and the final text are the author's, and every number was reproduced from the committed code.

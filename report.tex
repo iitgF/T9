@@ -42,7 +42,7 @@ Indian Institute of Technology Guwahati, India\\
 % ------------------------------------------------------------------ abstract
 \begin{center}\textbf{ABSTRACT}\end{center}
 \noindent
-This report presents a self-guided term project on one-day-ahead volatility forecasting for equity indices. Volatility drives option pricing, value-at-risk and position sizing, and, unlike the direction of returns, is strongly persistent and therefore forecastable. The objective was to test whether machine-learning (gradient-boosted trees) and deep-learning (LSTM) models can outperform well-implemented classical baselines. Eight models (naive, 21-day rolling variance, RiskMetrics EWMA, GARCH(1,1), GJR-GARCH, EGARCH, a walk-forward XGBoost and a regularized LSTM) were evaluated on 17 years of S\&P~500 daily returns (2008--2024) under a strict walk-forward protocol with no look-ahead bias, using the noise-robust QLIKE loss and the Diebold–Mariano test. A monthly re-estimated GARCH(1,1) achieved the best out-of-sample QLIKE (1.488), ahead of EGARCH, GJR-GARCH, EWMA, XGBoost and the LSTM; differences among the top three were statistically insignificant ($p=0.87$). XGBoost attained the lowest RMSE and MAE of all models, yet no learned model beat the GARCH family on the risk-relevant criterion. The project reproduces, with a fully reproducible open pipeline, the classic finding that GARCH is extremely hard to beat on daily data.
+This report presents a self-guided term project on one-day-ahead volatility forecasting for equity indices. Volatility drives option pricing, value-at-risk and position sizing, and, unlike the direction of returns, is strongly persistent and therefore forecastable. The objective was to test whether machine-learning (gradient-boosted trees) and deep-learning (LSTM) models can outperform well-implemented classical baselines. Eight models (naive, 21-day rolling variance, RiskMetrics EWMA, GARCH(1,1), GJR-GARCH, EGARCH, a walk-forward XGBoost and a regularized LSTM) were evaluated on 18.5 years of S\&P~500 daily returns (2008--2026) under a strict walk-forward protocol with no look-ahead bias, using the noise-robust QLIKE loss and the Diebold–Mariano test. A monthly re-estimated EGARCH(1,1) achieved the best out-of-sample QLIKE (1.504), statistically tied with GJR-GARCH ($p=0.47$); both leverage models significantly beat plain GARCH(1,1) ($p<0.001$) on a test window containing the 2022 bear market and the April-2025 tariff shock. The LSTM ranked third, ahead of plain GARCH and statistically indistinguishable from the winner ($p=0.19$), and the learned models attained the lowest RMSE (LSTM) and MAE (XGBoost). Even so, no learned model outranked the leverage GARCH family on the risk-relevant criterion: the classic finding that GARCH-type models are extremely hard to beat on daily data survives, in leverage-aware form.
 
 \vspace{2mm}
 \noindent\textbf{\textit{Index Terms:}} Volatility forecasting, GARCH, QLIKE, XGBoost, LSTM, walk-forward evaluation
@@ -114,7 +114,7 @@ the log of forward 5-day average squared returns: averaging suppresses proxy noi
 
 \textbf{XGBoost.} A gradient-boosted ensemble (400 trees, depth 3, learning rate 0.03, row/column subsampling 0.8, a deliberately conservative low-variance configuration) is re-trained from scratch every 22 days on all fully realized targets, mirroring the GARCH refit cadence so the comparison is fair. Warm-starting refits from the previous booster was evaluated and rejected: it changes ensemble composition for negligible savings, sacrificing reproducibility.
 
-\textbf{LSTM.} A single-layer LSTM (32 hidden units, linear head) reads the previous 20 days of standardized features and predicts $y_t$. Anti-leakage guards are explicit: sequences are labelled by their final row; standardization uses training-window statistics only; the early-stopping validation slice is carved from the \emph{end of the training window}, never from test. Training uses Adam on MSE in log-variance space, mini-batches of 64, up to 200 epochs with patience 15 and best-checkpoint restoration, and a fixed seed. The architecture is deliberately small: roughly 2{,}600 noisy training sequences cannot support a deep stack.
+\textbf{LSTM.} A single-layer LSTM (32 hidden units, linear head) reads the previous 20 days of standardized features and predicts $y_t$. Anti-leakage guards are explicit: sequences are labelled by their final row; standardization uses training-window statistics only; the early-stopping validation slice is carved from the \emph{end of the training window}, never from test. Training uses Adam on MSE in log-variance space, mini-batches of 64, up to 200 epochs with patience 15 and best-checkpoint restoration, and a fixed seed. The architecture is deliberately small: roughly 2{,}800 noisy training sequences cannot support a deep stack.
 
 \textbf{Evaluation losses.} RMSE and MAE are computed on the volatility scale ($\sqrt{\text{variance}}$) for interpretability. The headline criterion is
 \begin{equation}
@@ -128,33 +128,33 @@ with proxy $p_t=r_t^2$ and forecast $v_t=\hat\sigma_t^2$: QLIKE rankings are rob
 
 \subsection{Experimental Setup}
 
-\textbf{Data.} S\&P~500 index (\texttt{\^{}GSPC}) daily closes, 2008-01-01 to 2024-12-31, from Yahoo Finance (auto-adjusted), yielding 4{,}277 daily log returns from 2008-01-03 to 2024-12-30. The sample spans the 2008 financial crisis, the 2018 ``volmageddon'', the COVID-2020 crash, the 2022 bear market and several calm regimes.
+\textbf{Data.} S\&P~500 index (\texttt{\^{}GSPC}) daily closes, 2008-01-01 to 2026-06-30, from Yahoo Finance (auto-adjusted), yielding 4{,}650 daily log returns from 2008-01-03 to 2026-06-29. The sample spans the 2008 financial crisis, the 2018 ``volmageddon'', the COVID-2020 crash, the 2022 bear market, the April-2025 tariff shock and several calm regimes.
 
-\textbf{Split.} The final 30\% of observations forms the out-of-sample test window: 2{,}993 training days (2008-01-03 to 2019-11-20) and 1{,}284 test days (2019-11-21 to 2024-12-30). The test window contains the COVID crash, so models are stress-tested out of sample.
+\textbf{Split.} The final 30\% of observations forms the out-of-sample test window: 3{,}255 training days (2008-01-03 to 2020-12-04) and 1{,}395 test days (2020-12-07 to 2026-06-29). The COVID crash falls in the training window; the test window contains the 2022 bear market and the April-2025 tariff shock, so models are stress-tested out of sample on two sharp drawdowns.
 
 \textbf{Environment.} Windows~11, CPU only; Python 3.13 with \texttt{numpy}~2.4.4, \texttt{pandas}~3.0.2, \texttt{arch}~8.0.0, \texttt{xgboost}~3.3.0, \texttt{torch}~2.12.1, \texttt{statsmodels}~0.14.6. All seeds fixed (42); one shared split; the full pipeline executes in about one minute with the five heavy fits in parallel processes.
 
 \subsection{Results}
 
-Table~\ref{tab:leaderboard} reports the leaderboard over the 1{,}284-day test window, sorted by QLIKE. The LSTM covers 1{,}275 of 1{,}284 days because its first prediction requires a full 20-day feature sequence. The naive baseline's QLIKE of $1.19\times10^{3}$ reflects a property of the loss, which diverges whenever a near-zero variance forecast meets a non-zero realization.
+Table~\ref{tab:leaderboard} reports the leaderboard over the 1{,}395-day test window, sorted by QLIKE. The LSTM covers 1{,}387 of 1{,}395 days because its first prediction requires a full 20-day feature sequence. The naive baseline's QLIKE of $5.44\times10^{3}$ reflects a property of the loss, which diverges whenever a near-zero variance forecast meets a non-zero realization.
 
 \begin{table}[t]
 \centering
-\caption{Out-of-sample leaderboard, test window 2019-11-21 to 2024-12-30 (1{,}284 days), sorted by QLIKE (lower is better). RMSE and MAE on the volatility scale; QLIKE on the variance scale. Best value per column in bold.}
+\caption{Out-of-sample leaderboard, test window 2020-12-07 to 2026-06-29 (1{,}395 days), sorted by QLIKE (lower is better). RMSE and MAE on the volatility scale; QLIKE on the variance scale. Best value per column in bold.}
 \label{tab:leaderboard}
 \small
 \begin{tabular}{lrrrr}
 \toprule
 Model & $N$ & RMSE & MAE & QLIKE \\
 \midrule
-GARCH(1,1)      & 1284 & 0.00887 & 0.00633 & \textbf{1.4879} \\
-EGARCH(1,1)     & 1284 & 0.00852 & 0.00603 & 1.4943 \\
-GJR-GARCH(1,1)  & 1284 & 0.00881 & 0.00611 & 1.4974 \\
-EWMA(0.94)      & 1284 & 0.00934 & 0.00657 & 1.5161 \\
-XGBoost         & 1284 & \textbf{0.00816} & \textbf{0.00547} & 1.5567 \\
-Rolling(21)     & 1284 & 0.00948 & 0.00646 & 1.5798 \\
-LSTM            & 1275 & 0.00965 & 0.00570 & 1.5915 \\
-Naive           & 1284 & 0.01114 & 0.00747 & 1192.69 \\
+EGARCH(1,1)     & 1395 & 0.00728 & 0.00556 & \textbf{1.5042} \\
+GJR-GARCH(1,1)  & 1395 & 0.00731 & 0.00554 & 1.5091 \\
+LSTM            & 1387 & \textbf{0.00686} & 0.00499 & 1.5287 \\
+GARCH(1,1)      & 1395 & 0.00751 & 0.00576 & 1.5569 \\
+EWMA(0.94)      & 1395 & 0.00750 & 0.00573 & 1.5814 \\
+XGBoost         & 1395 & 0.00691 & \textbf{0.00496} & 1.5911 \\
+Rolling(21)     & 1395 & 0.00762 & 0.00571 & 1.6344 \\
+Naive           & 1395 & 0.00951 & 0.00672 & 5440.50 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -162,32 +162,34 @@ Naive           & 1284 & 0.01114 & 0.00747 & 1192.69 \\
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig_forecasts_vs_realized.png}
-\caption{One-day-ahead volatility forecasts of all models (naive omitted for legibility) against realized $|r_t|$ (grey), test window 2019-11-21 to 2024-12-30. All models track the same volatility clusters; they differ in smoothness and in responsiveness at eruptions such as COVID-2020.}
+\caption{One-day-ahead volatility forecasts of all models (naive omitted for legibility) against realized $|r_t|$ (grey), test window 2020-12-07 to 2026-06-29. All models track the same volatility clusters; they differ in smoothness and in responsiveness at eruptions such as the April-2025 tariff shock.}
 \label{fig:forecasts}
 \end{figure*}
 
-Figure~\ref{fig:forecasts} overlays every model's one-day-ahead volatility forecast on realized $|r_t|$ across the test window; Figure~\ref{fig:best} isolates the leaderboard winner against realized volatility. The Diebold–Mariano test between the two best models, GARCH(1,1) versus EGARCH(1,1) on per-day QLIKE, yields a statistic of $-0.166$ with $p=0.868$: the difference is not significant at any conventional level. The LSTM early-stopped at epoch 70 of a 200-epoch budget with best validation MSE (log-variance) of 0.642.
+Figure~\ref{fig:forecasts} overlays every model's one-day-ahead volatility forecast on realized $|r_t|$ across the test window; Figure~\ref{fig:best} isolates the leaderboard winner against realized volatility. Diebold–Mariano tests on per-day QLIKE give three results. Between the two best models, EGARCH(1,1) versus GJR-GARCH(1,1), the statistic is $-0.725$ with $p=0.468$: the two leverage models are statistically tied. Between EGARCH(1,1) and plain GARCH(1,1) the statistic is $-4.211$ with $p<0.0001$: the leverage models' advantage over the symmetric recursion is highly significant. Between EGARCH(1,1) and the LSTM the statistic is $-1.302$ with $p=0.193$: the LSTM is statistically indistinguishable from the winner. The LSTM early-stopped at epoch 37 of a 200-epoch budget with best validation MSE (log-variance) of 0.898.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{fig_best_vs_realized.png}
-\caption{Best model by QLIKE, GARCH(1,1), against realized volatility over the test window.}
+\caption{Best model by QLIKE, EGARCH(1,1), against realized volatility over the test window.}
 \label{fig:best}
 \end{figure}
 
 % ------------------------------------------------------------------ 5
 \section{Discussion}
 
-\textbf{Why the GARCH family swept the QLIKE podium.} Four compounding reasons emerged. First, the exploitable signal in daily data is one-dimensional, namely persistence in return magnitude (Fig.~\ref{fig:acf}), and the GARCH recursion~\eqref{eq:garch} encodes exactly that shape with three parameters; the learned models must rediscover the recursion from finite noisy data before they can improve on it. Second, maximum likelihood estimates GARCH against the correct variance objective, whereas the learned models train on the smoothed surrogate~\eqref{eq:target}, which is necessary to avoid proxy-noise collapse but biases them toward smoothness. Third, roughly 3{,}000 noisy training observations is a small-data regime that favours 3-parameter models over 32-unit networks; reported deep-learning wins in this literature typically involve intraday realized-variance data, large cross-sections of assets or exogenous information. Fourth, QLIKE's asymmetry~\eqref{eq:qlike} rewards fast upward reactions: GARCH-type recursions respond to a single large return the next day, while tree ensembles and MSE-trained sequence models arrive late to eruptions and are charged heavily for it.
+\textbf{Why the leverage models now lead.} The test window is dominated by two sharp drawdowns, the 2022 bear market and the April-2025 tariff shock, and the leverage effect is precisely the mechanism that turns a large negative return into higher next-day variance. GJR's threshold term and EGARCH's signed-residual term encode it directly, and on this window their advantage over the symmetric GARCH(1,1) recursion~\eqref{eq:garch} is highly significant ($p<0.0001$). This is a notable shift from a shorter sample ending in 2024, where the same comparison was insignificant: the leverage effect earns its keep exactly when the out-of-sample period contains asymmetric crashes.
 
-\textbf{Trade-offs observed.} XGBoost's best-in-class RMSE and MAE alongside a fifth-place QLIKE (Table~\ref{tab:leaderboard}) is the clearest trade-off: the smoothed target makes it accurate on average but slow at spikes, and the two metric families price those errors differently. Similarly, the leverage-effect models (EGARCH, GJR) improved point accuracy over plain GARCH but not QLIKE, and not significantly: the leverage effect is real but bought no significant one-day-ahead edge on this sample. Warm-starting XGBoost refits traded reproducibility for negligible speed and was rejected.
+\textbf{Why the learned models still do not win.} Three structural reasons persist. First, maximum likelihood estimates the GARCH family against the correct variance objective, whereas the learned models train on the smoothed surrogate~\eqref{eq:target}, which is necessary to avoid proxy-noise collapse but biases them toward smoothness. Second, roughly 3{,}200 noisy training observations is a small-data regime that favours 3--4 parameter recursions over 32-unit networks; reported deep-learning wins in this literature typically involve intraday realized-variance data, large cross-sections of assets or exogenous information. Third, QLIKE's asymmetry~\eqref{eq:qlike} rewards fast upward reactions: GARCH-type recursions respond to a single large return the next day, while tree ensembles and MSE-trained sequence models arrive late to eruptions and are charged heavily for it. That said, the case against the learned models is weaker on this longer sample: the LSTM, whose signed return lags let it learn the leverage pattern from data, ranks third, ahead of plain GARCH, and is statistically indistinguishable from the winner ($p=0.19$).
 
-\textbf{Limitations.} (i)~Single asset and single test window: conclusions concern the S\&P~500 over 2019--2024, not ML-for-volatility in general. (ii)~The squared-return proxy is the noisiest admissible choice; intraday realized variance would sharpen both training and evaluation. (iii)~Hyperparameter search was deliberately modest, so the learned models' ceilings may be somewhat higher than reported, though the QLIKE gap ($\approx$0.07--0.10) makes a rank reversal unlikely. (iv)~Single seed per learned model. (v)~The DM test compares the two best models selected on the same test data, a mild selection bias; at $p=0.868$ this caveat is immaterial.
+\textbf{Trade-offs observed.} The learned models' best-in-class point accuracy (LSTM the lowest RMSE, XGBoost the lowest MAE) alongside a QLIKE deficit (Table~\ref{tab:leaderboard}) is the clearest trade-off: the smoothed target makes them accurate on average but slow at spikes, and the two metric families price those errors differently. Warm-starting XGBoost refits traded reproducibility for negligible speed and was rejected.
+
+\textbf{Limitations.} (i)~Single asset and single test window: conclusions concern the S\&P~500 over 2020--2026, not ML-for-volatility in general. (ii)~The squared-return proxy is the noisiest admissible choice; intraday realized variance would sharpen both training and evaluation. (iii)~Hyperparameter search was deliberately modest, so the learned models' ceilings may be somewhat higher than reported; with the LSTM already within statistical noise of the winner, tuning could plausibly close the remaining gap. (iv)~Single seed per learned model. (v)~The DM test between the two best models selected on the same test data carries a mild selection bias; the EGARCH-versus-GARCH comparison ($p<0.0001$) is unaffected by this caveat.
 
 % ------------------------------------------------------------------ 6
 \section{Conclusion and Future Work}
 
-Under a leak-proof walk-forward protocol on 17 years of S\&P~500 data, a monthly re-estimated GARCH(1,1) delivered the best one-day-ahead variance forecasts by QLIKE, with EGARCH and GJR-GARCH statistically indistinguishable behind it, and no learned model outranked the GARCH family on the risk-relevant criterion. The answer to the project's question is a well-supported \emph{no}, with the nuance that the learned models were not poor (XGBoost won both symmetric metrics) but were beaten where it matters by a 40-year-old model with three parameters, consistent with \cite{hansen2005}.
+Under a leak-proof walk-forward protocol on 18.5 years of S\&P~500 data, a monthly re-estimated EGARCH(1,1) delivered the best one-day-ahead variance forecasts by QLIKE, statistically tied with GJR-GARCH, and both leverage models significantly outperformed plain GARCH(1,1) on a test window containing two asymmetric crashes. No learned model outranked the leverage GARCH family on the risk-relevant criterion, so the answer to the project's question remains a supported \emph{no}, consistent with \cite{hansen2005}, but a narrower one than on shorter samples: the LSTM ranked third, ahead of plain GARCH, statistically indistinguishable from the winner, and the learned models took both point-accuracy metrics (LSTM the RMSE, XGBoost the MAE).
 
 The main learning outcomes were methodological: constructing a genuinely leak-free walk-forward harness (target buffering, train-only scaling, end-of-train validation) proved harder and more consequential than model building, and the choice of loss function changed the ranking of models, a reminder that ``better'' is undefined until the metric is.
 

@@ -5,25 +5,27 @@ one-day-ahead equity-volatility forecasts from classical econometric baselines,
 gradient-boosted trees, and an LSTM, under a strict walk-forward protocol with no
 look-ahead bias.
 
-**Headline result:** on 17 years of S&P 500 daily data (2008–2024), a monthly
-re-estimated **GARCH(1,1)** delivers the best out-of-sample QLIKE (1.488). EGARCH and
-GJR-GARCH are statistically indistinguishable behind it (Diebold–Mariano p = 0.87).
-XGBoost attains the lowest RMSE and MAE, yet no learned model beats the GARCH family on
-the risk-relevant QLIKE criterion. The classic finding that GARCH is hard to beat on
-daily data reproduces cleanly.
+**Headline result:** on 18.5 years of S&P 500 daily data (2008–2026), a monthly
+re-estimated **EGARCH(1,1)** delivers the best out-of-sample QLIKE (1.504), statistically
+tied with GJR-GARCH (Diebold–Mariano p = 0.47). Both leverage models significantly beat
+plain GARCH(1,1) (p < 0.0001) on a test window containing the 2022 bear market and the
+April-2025 tariff shock. The LSTM ranks third, ahead of plain GARCH and statistically
+indistinguishable from the winner (p = 0.19), and the learned models take both
+point-accuracy metrics (LSTM the RMSE, XGBoost the MAE). Yet no learned model beats the
+leverage GARCH family on the risk-relevant QLIKE criterion.
 
-## Leaderboard (out-of-sample, 1,284 test days)
+## Leaderboard (out-of-sample, 1,395 test days, 2020-12-07 to 2026-06-29)
 
 | Model | RMSE | MAE | QLIKE |
 |---|---|---|---|
-| GARCH(1,1) | 0.00887 | 0.00633 | **1.4879** |
-| EGARCH(1,1) | 0.00852 | 0.00603 | 1.4943 |
-| GJR-GARCH(1,1) | 0.00881 | 0.00611 | 1.4974 |
-| EWMA(0.94) | 0.00934 | 0.00657 | 1.5161 |
-| XGBoost | **0.00816** | **0.00547** | 1.5567 |
-| Rolling(21) | 0.00948 | 0.00646 | 1.5798 |
-| LSTM | 0.00965 | 0.00570 | 1.5915 |
-| Naive | 0.01114 | 0.00747 | 1192.69 |
+| EGARCH(1,1) | 0.00728 | 0.00556 | **1.5042** |
+| GJR-GARCH(1,1) | 0.00731 | 0.00554 | 1.5091 |
+| LSTM | **0.00686** | 0.00499 | 1.5287 |
+| GARCH(1,1) | 0.00751 | 0.00576 | 1.5569 |
+| EWMA(0.94) | 0.00750 | 0.00573 | 1.5814 |
+| XGBoost | 0.00691 | **0.00496** | 1.5911 |
+| Rolling(21) | 0.00762 | 0.00571 | 1.6344 |
+| Naive | 0.00951 | 0.00672 | 5440.50 |
 
 ## Repository layout
 

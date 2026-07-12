@@ -3,7 +3,7 @@ EPS = 1e-12  # numerical floor so we never divide by / log zero
 CFG = {
     "ticker":       "^GSPC",     # S&P 500. Try "^NSEI" (Nifty 50), "BTC-USD", "GC=F" (gold)
     "start":        "2008-01-01",
-    "end":          "2024-12-31",
+    "end":          "2026-06-30",
     "test_frac":    0.30,        # last 30% of the sample is the out-of-sample test window
     "roll_window":  21,          # window for the rolling-std baseline (~1 trading month)
     "ewma_lambda":  0.94,        # RiskMetrics decay
